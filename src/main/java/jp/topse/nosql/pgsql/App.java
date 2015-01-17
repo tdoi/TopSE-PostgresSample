@@ -1,6 +1,12 @@
 package jp.topse.nosql.pgsql;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -103,6 +109,35 @@ public class App {
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    public static void readAndDo(String path) {
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(new BufferedInputStream(new FileInputStream(path))));
+            while (true) {
+                String line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                
+                // ここで各行に対して何かやる
+                System.out.println("*****" + line + "*****");
+                
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }
