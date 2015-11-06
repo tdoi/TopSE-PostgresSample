@@ -23,8 +23,8 @@ import org.postgresql.util.PGobject;
 public class App {
     public static final String DRIVER = "org.postgresql.Driver";
     public static final String DB_SERVER = "localhost:15432";
-    public static final String DB_NAME = "doi";
-    public static final String DB_USER = "doi";
+    public static final String DB_NAME = "topseXX";
+    public static final String DB_USER = "topseXX";
     public static final String DB_PASS = "topse";
     public static final String TABLE_NAME_1 = "logs";
     public static final String TABLE_NAME_2 = "logs2";
