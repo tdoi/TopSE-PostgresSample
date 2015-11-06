@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -21,38 +20,59 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.postgresql.util.PGobject;
 
-/**
- * Hello world!
- *
- */
 public class App {
     public static final String DRIVER = "org.postgresql.Driver";
-    public static final String DB_SERVER = "157.1.206.2";
-    public static final String DB_NAME = "topse";
-    public static final String DB_USER = "topse";
+    public static final String DB_SERVER = "localhost:15432";
+    public static final String DB_NAME = "doi";
+    public static final String DB_USER = "doi";
     public static final String DB_PASS = "topse";
-    public static final String TABLE_NAME_1 = "logs_test_1";
-    public static final String TABLE_NAME_2 = "logs_test_2";
+    public static final String TABLE_NAME_1 = "logs";
+    public static final String TABLE_NAME_2 = "logs2";
+    public static final String ACCESS_LOG = "src/main/resources/access.log";
 
     public static void main(String[] args) {
         Connection con = createConnection();
         if (con == null) {
             return;
         }
-        testHstore(con);
-        testJson(con);
+//        insertIntoHstoreSample(con);
+//        readFromHstoreSample(con);
+//        insertIntoJsonSample(con);
+//        readFromJsonSample(con);
+        
+        // clear data
+        clearData(con);
+        
+        // Problem 1
+        insertAccessLog(con);
+
+        // Problem 2 and 3
+        countData(con);
+        
+        // Problem 4
+        appendWarning(con);
     }
     
-    public static void testHstore(Connection con) {
+    public static void insertIntoHstoreSample(Connection con) {
         try {
             Statement statement = con.createStatement();
-            String query = "INSERT INTO " + TABLE_NAME_1 + " (datetime, attributes) " + " VALUES " + " (NOW()," + " 'target => \"index.html\","
-                    + "  referer => \"http://google.com\"," + "  parameter => \"x=1\"');";
+            String query = "INSERT INTO " + TABLE_NAME_1
+            		+ " (datetime, attributes) "
+            		+ " VALUES "
+            		+ " (NOW(),"
+            			+ "'"
+            			+ " target => \"index.html\","
+            			+ " referer => \"http://google.com\","
+            			+ " parameter => \"x=1\""
+            			+ "'"
+            			+ ");";
             statement.executeUpdate(query);
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
 
+    public static void readFromHstoreSample(Connection con) {
         try {
             PreparedStatement statement = con.prepareStatement("SELECT * FROM " + TABLE_NAME_1);
             ResultSet resultSet = statement.executeQuery();
@@ -67,18 +87,26 @@ public class App {
         }
     }
 
-    public static void testJson(Connection con) {
+    public static void insertIntoJsonSample(Connection con) {
         try {
             Statement statement = con.createStatement();
-            String query = "INSERT INTO " + TABLE_NAME_2 + " (datetime, attributes) " + " VALUES " + " (NOW()," +
-                    " '{\"target\": \"index.html\","
-                    + " \"referer\": \"http://google.com\","
-                    + " \"parameter\": {\"x\": 1} }' )";
+            String query = "INSERT INTO " + TABLE_NAME_2
+            		+ " (datetime, attributes) " 
+            		+ " VALUES "
+            		+ " (NOW(),"
+            			+ "'"
+            			+ "{\"target\": \"index.html\","
+            			+ " \"referer\": \"http://google.com\","
+            			+ " \"parameter\": {\"x\": 1} }"
+            			+ "'"
+            			+ ")";
             statement.executeUpdate(query);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
+    }
+    
+    public static void readFromJsonSample(Connection con) {
         try {
             PreparedStatement statement = con.prepareStatement("SELECT * FROM " + TABLE_NAME_2);
             ResultSet resultSet = statement.executeQuery();
@@ -112,19 +140,53 @@ public class App {
         }
     }
     
-    public static void readAndDo(String path) {
+    public static void clearData(Connection con) {
+        try {
+            PreparedStatement statement1 = con.prepareStatement("DELETE FROM " + TABLE_NAME_1);
+            statement1.executeQuery();
+            PreparedStatement statement2 = con.prepareStatement("DELETE FROM " + TABLE_NAME_2);
+            statement2.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public static void insertAccessLog(Connection con) {
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new InputStreamReader(new BufferedInputStream(new FileInputStream(path))));
+            reader = new BufferedReader(new InputStreamReader(new BufferedInputStream(new FileInputStream(ACCESS_LOG))));
             while (true) {
                 String line = reader.readLine();
                 if (line == null) {
                     break;
                 }
+
+                String[] logItems = line.split(",");
+                String target = logItems[0];
+                Map<String, String> params = new HashMap<String, String>();
+                String referer = logItems.length > 1 ? logItems[1] : null;
+                String[] targetItems = target.split("\\?");
+                if (targetItems.length == 2) {
+                	target = targetItems[0];
+                	String[] paramItems = targetItems[1].split("&");
+                	for (int i = 0; i < paramItems.length; ++i) {
+                		String[] items = paramItems[i].split("=");
+                		params.put(items[0],  items[1]);
+                	}
+                }
                 
-                // ここで各行に対して何かやる
-                System.out.println("*****" + line + "*****");
+                System.out.println("*****************");
+                System.out.println(line);
+                System.out.println("Target: "  + target);
+                System.out.println("Referer: " + referer);
+                System.out.println("Params: "  + params.size());
+                for (Map.Entry<String, String> entry : params.entrySet()) {
+                	System.out.println("\t" + entry.getKey() + "=" + entry.getValue());
+                }
                 
+                // PLEASE IMPLEMENT HERE
+
+                		
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -140,4 +202,15 @@ public class App {
             }
         }
     }
+    
+    public static void countData(Connection con) {
+        // PLEASE IMPLEMENT HERE
+
+    }
+    
+    public static void appendWarning(Connection con) {
+        // PLEASE IMPLEMENT HERE
+    	
+    }
+
 }
